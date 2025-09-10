@@ -244,8 +244,19 @@ Create a precipitation plot that looks like the following.  Note that
 
 
 ```{r weather_plot_precip}
-# ggplot(weather, aes(x= dateInYear, y = CulmPrec) + points() - Will come back later, not able to figure out currently
-         
+# triangles area, using geom_area, for blue lines using geom_line, taking only subset of weather data only takes it when record is 1 meaning it makes a record, taking a shape and, color and size
+# geom_text directly puts label on the graph -- very cool! 
+
+
+
+ ggplot(weather, aes(x= dateInYear, y = CulmPrec)) + theme_classic() +
+  geom_area(fill = "#ebeae2") + 
+  geom_line(color = "#32a3d8") + 
+  geom_point(data = subset(weather, RecordP == 1),
+             shape = 25, fill = "black", size = 3)
+  
+  # Need to talk to preceptors regarding logic of putting lable on graph with geom_text()
+
          
 
 ```
