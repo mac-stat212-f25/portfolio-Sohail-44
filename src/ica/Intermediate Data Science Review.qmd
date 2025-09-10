@@ -61,11 +61,12 @@ glimpse(Weather_Clean) # confirmed the new variables added
  Weather_Data %>% 
     mutate(month_name = month.abb[Month]) %>% head() # it worked 
   
-Weather_Data
+glimpse(Weather_Data)
    
 ```
 
 ```{r}
+# Writing the processed/cleaned data in the processed folder 
 write_csv(Weather_Clean, file = "../../data/processed/Weather_Clean.csv")
 ```
 
