@@ -58,9 +58,10 @@ glimpse(Weather_Clean) # confirmed the new variables added
 
 ```{r}
 # 4th via sunsetting of vector(need to review it again)
-Weather_Data %>% 
+ Weather_Data %>% 
     mutate(month_name = month.abb[Month]) %>% head() # it worked 
   
+Weather_Data
    
 ```
 
