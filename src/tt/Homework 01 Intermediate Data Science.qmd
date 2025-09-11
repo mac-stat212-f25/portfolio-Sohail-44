@@ -1,0 +1,120 @@
+---
+title: "Homework 01"
+---
+
+
+## TidyTuesday Section
+
+Explore the week's [TidyTuesday](https://github.com/rfordatascience/tidytuesday) challenge. Develop a research question, then answer it through a short data story with [effective visualization(s)]({{< var effective-viz-url >}}).  Provide sufficient background for readers to grasp your narrative.
+
+Reasearch Question : How are holidays/weekends related to fatal car crashes in the united states?
+
+```{r}
+library(tidyverse)
+```
+
+
+## Reading in Data 
+```{r}
+# .. go up one directory
+# Reading in Data 
+daily_AccApril_22 <- read.csv("/Users/mohammedsohailkhan/Desktop/Fall_2025/Intermediate_DS/Portfolio/portfolio-Sohail-44/data/raw/Daily_Accidents_Apr_22_2025.csv")
+view(daily_AccApril_22)
+```
+
+
+## Dividing it into weekends/Holidays and non-weekends and  comparing it against fatality then ggplotting and seeing what we can figure out 
+
+```{r}
+# Note : %>% this piping can be used only if you have installed deplyr or itdyverse 
+# Adding a day variable : using weekday instead of format to get make the rewrite day as weekday 
+daily_AccApril_22 <- daily_AccApril_22 %>% 
+  mutate(day = weekdays(as.Date(date)))
+
+head(daily_AccApril_22)
+
+```
+```{r}
+# Lets filter out the weekends and holidays 
+# filter it must be true or false, you can't just give a value or column
+# %in% its same as in of python - basically saying : " its in there "
+# if I data is passed through pipe, i don't need to pass again in ggplot
+daily_AccApril_22 %>% 
+  filter(fatalities_count > 0, daily_AccApril_22$day %in% c ("Saturday", "Sunday")) %>% 
+  ggplot(aes(x = day, y = fatalities_count)) + 
+  geom_col(color = "red") + theme_classic()
+
+# It shows the cumulative fatalities of weekends through of the history of USA from 1992 to 2016
+
+```
+```{r}
+# Getting a numeric summary of the plot 
+# grouping by day so that we can get a summary of weekends (saturday and sunday combined)
+# %>% -- its essentially saying and then everything that occured before is passed we don't need to create specific column if we have filtered it and piped it
+
+weekend_fatalities <- daily_AccApril_22 %>% 
+  filter(fatalities_count > 0, daily_AccApril_22$day %in% c ("Saturday", "Sunday")) %>% 
+  group_by(day) %>% 
+  summarise(total_fatalities = sum(fatalities_count),
+            mean_fatalities  = mean(fatalities_count),
+            median_fatalities = median(fatalities_count),
+            n_records = n())
+  weekend_fatalities
+  
+```
+# Lets compare the fatalities of weekdays and get a summary 
+```{r}
+daily_AccApril_22 %>% 
+  filter(fatalities_count > 0, daily_AccApril_22$day %in% c ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")) %>%
+  ggplot(aes(x = day, y = fatalities_count)) + 
+  geom_col(color = "red") + theme_classic()
+```
+# Lets get a numeric summary 
+```{r}
+weekdays_fatalities <-daily_AccApril_22 %>% 
+  filter(fatalities_count > 0, daily_AccApril_22$day %in% c ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")) %>%
+  group_by(day) %>% 
+  summarise(total_fatalities = sum(fatalities_count),
+            mean_fatalities  = mean(fatalities_count),
+            median_fatalities = median(fatalities_count),
+            n_records = n())
+
+weekdays_fatalities
+
+```
+# Cool, it shows that means fatalities is highest on Saturday,friday and sunday -- Lets plot mean fatalities of whole week and take mean of sunday, saturday and friday fatalities and compare with Monday, tuesday, Wednesday and thurday fatalities 
+```{r}
+# ggplot distinctly assigns color from its default color palette for fill = day type 
+# ifelse - if day in c (sunday/saturday), call it weekends or else call it a weekday
+allWeek_mean_fatalities <- daily_AccApril_22 %>%
+  mutate(day_type = ifelse(day %in% c("Saturday", "Sunday"), "Weekend", "Weekday")) %>% 
+  group_by(day_type) %>%
+  summarise(mean_fatalities = mean(fatalities_count, na.rm = TRUE)) 
+allWeek_mean_fatalities
+
+  ggplot(allWeek_mean_fatalities, aes(x = day_type, y = mean_fatalities, fill = day_type)) + # ggplot distinctly assigns
+  geom_col() +
+  labs(title = "Mean Fatalities: Weekdays vs Weekends",
+       x = "Day Type",
+       y = "Mean Fatalities")
+
+```
+## Including fridays as weekends as well beacuse most people go out and drive on friday evening once work is done 
+```{r}
+allWeek_mean_fatalities <- daily_AccApril_22 %>%
+  mutate(day_type = ifelse(day %in% c("Friday", "Saturday", "Sunday"), "Weekend", "Weekday")) %>%
+  group_by(day_type) %>%
+  summarise(mean_fatalities = mean(fatalities_count, na.rm = TRUE)) 
+allWeek_mean_fatalities
+
+  ggplot(allWeek_mean_fatalities, aes(x = day_type, y = mean_fatalities, fill = day_type)) +
+  geom_col() +
+  labs(title = "Mean Fatalities: Weekdays vs Weekends",
+       x = "Day Type",
+       y = "Mean Fatalities")
+```
+
+
+## Conclusion : The data does support the Research question showing that on average there's 28 more fatalities due to car accidents on weekends than weekdays in the US history from 1992 to 2016. Additionally, due to nature of car accidents I have added friday to weekends as more people see Friday evening as the beginning of weekens and as per the analysis on average if we combine Friday, Saturday and Sunday there 35 more fatalities due to car accidents on weekends than weekdays in the US history from 1992 to 2016.
+
+
