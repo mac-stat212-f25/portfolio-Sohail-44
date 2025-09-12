@@ -68,11 +68,13 @@ book:
       chapters:
       - src/tt/2025-07-08.qmd
       - src/tt/2025-07-15.qmd
+      - src/tt/Homework_01_Intermediate_Data Science.qmd
 
     - part: "In-Class Activities"
       chapters:
       - src/ica/ica-sample1.qmd
       - src/ica/ica-sample2.qmd
+
 
   appendices:
   - src/appx/appx-sample1.qmd
