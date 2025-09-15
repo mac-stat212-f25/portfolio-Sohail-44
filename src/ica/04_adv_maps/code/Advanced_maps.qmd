@@ -102,9 +102,11 @@ See [Spatial Data Appendix](https://hash-mac.github.io/stat212site-f25/notes/spa
 # The sf package comes with a North Carolina shapefile:
 nc <- st_read(system.file("shape/nc.shp", package = "sf"))
 
+
+
 # Read in shapefiles just downloaded
-mn_cities <- st_read("../Data/Lakes_and_Rivers_Open_Water_Features/LakesAndRivers.shp")
-mn_water <- st_read("../Data/Minnesota_Population_Centers/city_and_township_population_centers.shp")
+mn_cities <- st_read("../Data/Minnesota_Population_Centers/city_and_township_population_centers.shp")
+mn_water <- st_read("../Data/Lakes_and_Rivers_Open_Water_Features/LakesAndRivers.shp")
 ```
 
 The `sf` package reads in spatial data in `data.frame`-like format. Using the `class()` function we can check the **class** (type) of object that we just read in. Note the presence of the "sf" and "data.frame" classes:
@@ -156,23 +158,33 @@ Take a look at the **function** below that re-maps a spatial object using a new 
 - Use your function to make two new maps using your chosen CRSs.
 
 ```{r transform_via_function}
-transform_and_plot <- function(spatial_obj, new_crs, title = 'Chicago Map') {
+# Ths transform_and_plot is like a normal function in a any Programming Language 
+transform_and_plot <- function(spatial_obj, new_crs, title) {
     spatial_obj %>% 
         st_transform(crs = new_crs) %>% 
         ggplot() +
             geom_sf() +
-            theme_classic()
+            labs(title = title) +
+            theme_classic() 
   
 }
 
+ggplot(nc) +
+    geom_sf() +
+    theme_classic() +
+    labs(title = "NAD27 (Original)") # Just givin g the title 
+
+```
+```{r}
+
 # Example usage of this function (using a South Carolina CRS)
-transform_and_plot(nc, new_crs = "EPSG:32133")
-
-
-
+transform_and_plot(nc, new_crs = "EPSG:32133", title = "South Carolina")
+transform_and_plot(nc, new_crs = "EPSG:6439", title = "Florida")
 ```
 
 **Verify your understanding:** If you had point location data that was not in the NAD27 CRS, what would you expect about the accuracy of how they would be overlaid on the original North Carolina map?
+
+It won't be as accurate because the point does not fit the NAD27 datum CRS and since NAD27 is for all of America and North Carolina is in US, the view would be distorted. 
 
 
 ## MN Map with Multiple Layers
@@ -201,9 +213,26 @@ names(mn_counties)[names_counties == "state_name"] <- c("state_name1", "state_na
 - If the datasets don't all have the same CRS, use `st_transform()` to update the datasets to have the same CRS as `mn_cities`. You can use `crs = st_crs(mn_cities)` within `st_transform()`.
 
 ```{r}
-
+st_crs(mn_cities)
+```
+```{r}
+st_crs(mn_water)
 
 ```
+
+```{r}
+st_crs(mn_counties) # mn_counties CRS is different  EPSG:4326 
+```
+
+
+```{r}
+mn_counties <- mn_counties %>% 
+  st_transform(crs = st_crs(mn_cities))
+
+st_crs(mn_counties)
+
+```
+
 
 
 ### Counties + Cities
@@ -215,6 +244,11 @@ names(mn_counties)[names_counties == "state_name"] <- c("state_name1", "state_na
 - Install the `ggthemes` package, and add the following layer to use a clean map theme: `+ ggthemes::theme_map()`
 
 ```{r}
+library(ggthemes) 
+ggplot() + # plot frame
+    geom_sf(data = mn_counties, fill = "white") + # county boundary layer
+    geom_sf(data = mn_cities, size = 0.5) + # city point layer
+    ggthemes::theme_map() # removes x and y 
 
 
 ```
@@ -226,13 +260,13 @@ names(mn_counties)[names_counties == "state_name"] <- c("state_name1", "state_na
 7. We can use traditional `ggplot2` aesthetics (e.g., `fill`, `color`) to display location specific attributes. Below we only plot large cities, and we color and size cities according to their population.
 
 ```{r mn_map_add_color}
-#ggplot() +
-    #geom_sf(data = mn_counties, fill = "white") + 
-    #geom_sf(data = mn_cities |> filter(Population >= 10000), mapping = aes(color = Population, size = Population)) + # cities layer
-    #scale_color_viridis_c() + # continuous (gradient) color scale
-    #labs(title = "Minnesota Cities with Population >= 10,000") + 
-    #ggthemes::theme_map() +
-    #theme(legend.position = "bottom") # move legend
+ggplot() +
+    geom_sf(data = mn_counties, fill = "white") + 
+    geom_sf(data = mn_cities |> filter(Population >= 10000), mapping = aes(color = Population, size = Population)) + # cities layer
+     scale_color_viridis_c() + # continuous (gradient) color scale
+    labs(title = "Minnesota Cities with Population >= 10,000") + 
+    ggthemes::theme_map() +
+    theme(legend.position = "bottom") # move legend
 ```
 
 Look up the `scale_color_viridis_c()` documentation via the [ggplot2 reference](https://ggplot2.tidyverse.org/reference/scale_viridis.html).
@@ -253,12 +287,12 @@ Where are large cities located? Is there some relationship to local geography/te
 - `?terra::as.data.frame`
 
 ```{r get_elevation_data_zoom_out}
-#elevation <- elevatr::get_elev_raster(mn_counties, z = 5, clip = "bbox")
-#raster::crs(elevation) <- sf::st_crs(mn_counties)
+elevation <- elevatr::get_elev_raster(mn_counties, z = 5, clip = "bbox")
+raster::crs(elevation) <- sf::st_crs(mn_counties)
 
 # Convert to data frame for plotting
-#elev_df <- elevation |> terra::as.data.frame(xy = TRUE)
-#colnames(elev_df) <- c("x", "y", "elevation")
+elev_df <- elevation |> terra::as.data.frame(xy = TRUE)
+colnames(elev_df) <- c("x", "y", "elevation")
 ```
 
 Build on our existing map by adding a raster layer for elevation as the background.
@@ -268,6 +302,15 @@ Build on our existing map by adding a raster layer for elevation as the backgrou
 - Add in the layers from the map above to show the largest cities and the county outlines. To remove a background color, use `fill = NA`.
 
 ```{r}
+ggplot() +
+    geom_raster(data = elev_df, aes(x = x, y = y, fill = elevation)) + # adding the elevation as first (bottom) layer
+    scale_fill_gradient(low = "darkgreen", high = "white", guide = FALSE) +
+    geom_sf(data = mn_counties, fill = NA, color = "black") + 
+    geom_sf(data = mn_cities |> filter(Population >= 10000), mapping = aes(color = Population, size = Population))+ # cities layer
+    scale_color_viridis_c() + # continuous (gradient) color scale
+    labs(title = "Minnesota Cities with Population >= 10,000") + 
+    ggthemes::theme_map() +
+    theme(legend.position = "bottom") # move legend
 
 
 ```
@@ -287,36 +330,36 @@ seven_countyarea <- mn_counties |>
     st_bbox()
 seven_countyarea
 
-#elevation <- elevatr::get_elev_raster(mn_counties |> st_crop(seven_countyarea), z = 9, clip = "bbox")
-#raster::crs(elevation) <- sf::st_crs(mn_counties)
+elevation <- elevatr::get_elev_raster(mn_counties |> st_crop(seven_countyarea), z = 9, clip = "bbox")
+raster::crs(elevation) <- sf::st_crs(mn_counties)
 
 # Convert to data frame for plotting
-#elev_df <- elevation |> terra::as.data.frame(xy = TRUE)
-#colnames(elev_df) <- c("x", "y", "elevation")
+elev_df <- elevation |> terra::as.data.frame(xy = TRUE)
+colnames(elev_df) <- c("x", "y", "elevation")
 ```
 
 In the plot below, we add a layer for water information and a `coord_sf()` layer to restrict the x and y-axis limits to the Twin Cities bounding box. (Without this layer, the map would zoom back out to show all counties and bodies of water).
 
 ```{r elevation_map_zoom_in}
-#ggplot() +
-    #geom_raster(data = elev_df, aes(x = x, y = y, fill = elevation)) + 
-    #geom_sf(data = mn_counties, fill = NA, color = "black") + # county boundary layer
-    #geom_sf(data = mn_water, fill = "lightsteelblue1", color = "lightsteelblue1") + # NEW: river/lake layer
-    #geom_sf(data = mn_cities |> filter(Population >= 10000), mapping = aes(color = Population, size = Population)) + # cities layer
-    #scale_color_viridis_c(option = "magma") + # continuous (gradient) color scale
-    #scale_fill_gradient(low = "darkgreen", high = "white") + # continuous (gradient) fill scale
-    #coord_sf(xlim = seven_countyarea[c("xmin", "xmax")], ylim = seven_countyarea[c("ymin", "ymax")]) + # NEW: crop map to Twin Cities bounding box
-    #labs(title = "Twin Cities with Population >= 10,000") + 
-    #ggthemes::theme_map() +
-    #theme(legend.position = "none") # remove legend
+ggplot() +
+    geom_raster(data = elev_df, aes(x = x, y = y, fill = elevation)) + 
+    geom_sf(data = mn_counties, fill = NA, color = "black") + # county boundary layer
+    geom_sf(data = mn_water, fill = "lightsteelblue1", color = "lightsteelblue1") + # NEW: river/lake layer
+    geom_sf(data = mn_cities |> filter(Population >= 10000), mapping = aes(color = Population, size = Population)) + # cities layer
+    scale_color_viridis_c(option = "magma") + # continuous (gradient) color scale
+    scale_fill_gradient(low = "darkgreen", high = "white") + # continuous (gradient) fill scale
+    coord_sf(xlim = seven_countyarea[c("xmin", "xmax")], ylim = seven_countyarea[c("ymin", "ymax")]) + # NEW: crop map to Twin Cities bounding box
+    labs(title = "Twin Cities with Population >= 10,000") + 
+    ggthemes::theme_map() +
+    theme(legend.position = "none") # remove legend
 ```
 
 Let's add to the above code chunk to save the map above to an image file called `tc_map_zoom.png` in the `figures` folder. The code example below shows a general template for saving a plot to file. Choose a reasonable width and height. (There are also `jpeg()` and `pdf()` functions for writing images.)
 
 ```{r save_plot_example, eval=FALSE}
-#png("relative path to image", width = width_in_pixels, height = height_in_pixels)
+# png("relative path to image", width = width_in_pixels, height = height_in_pixels)
 # Code for creating plot
-#dev.off()
+# dev.off()
 ```
 
 
@@ -325,29 +368,28 @@ Let's add to the above code chunk to save the map above to an image file called 
 Below we show how to make the MN counties map in the `leaflet` package.
 
 ```{r leaflet}
-#library(leaflet)
+library(leaflet)
 
-#mn_counties_leaf <- mn_counties |> st_transform(4326) # Leaflet expects this CRS for vectors
-#mn_cities_leaf <- mn_cities |> st_transform(4326)
+mn_counties_leaf <- mn_counties |> st_transform(4326) # Leaflet expects this CRS for vectors
+mn_cities_leaf <- mn_cities |> st_transform(4326)
 
-#cities_per_county <- st_join(mn_cities_leaf, mn_counties_leaf) |>
-    #st_drop_geometry() |> # removes geometry - makes the following calculation more efficient
-    #count(name) 
+cities_per_county <- st_join(mn_cities_leaf, mn_counties_leaf) |>
+    st_drop_geometry() |> # removes geometry - makes the following calculation more efficient
+    count(name) 
 
-#mn_counties_leaf |> 
-    #filter(name %in% c("Anoka", "Hennepin", "Ramsey", "Dakota", "Carver", "Washington", "Scott")) |>
-    #left_join(cities_per_county) |>
-    #leaflet() |> 
-    #addProviderTiles("CartoDB.Positron") |> 
-    #addPolygons(
-        #color = "#444444", weight = 1, smoothFactor = 0.5, opacity = 1.0,
-        #fillOpacity = 0.5, fillColor = ~colorQuantile("YlOrRd", n)(n),
-        #highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) |>
-    #addCircles(data = mn_cities_leaf |> filter(County %in% paste(c("Anoka", "Hennepin", "Ramsey", "Dakota", "Carver", "Washington", "Scott"), "County")), color = "#444444")
+mn_counties_leaf |> 
+    filter(name %in% c("Anoka", "Hennepin", "Ramsey", "Dakota", "Carver", "Washington", "Scott")) |>
+    left_join(cities_per_county) |>
+    leaflet() |> 
+    addProviderTiles("CartoDB.Positron") |> 
+    addPolygons(
+        color = "#444444", weight = 1, smoothFactor = 0.5, opacity = 1.0,
+        fillOpacity = 0.5, fillColor = ~colorQuantile("YlOrRd", n)(n),
+        highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE)) |>
+    addCircles(data = mn_cities_leaf |> filter(County %in% paste(c("Anoka", "Hennepin", "Ramsey", "Dakota", "Carver", "Washington", "Scott"), "County")), color = "#444444")
 ```
 
 
 ## Done!
 
 - Check the ICA Instructions for how to (a) push your code to GitHub and (b) update your portfolio website
-
