@@ -22,7 +22,7 @@ number-depth: 2
 
 book:
   title: "COMP/STAT212 Portfolio"
-  author: "Your Name Here"
+  author: "Mohammed Sohail Khan"
   date: today  # use today to update date published based on last time project was edited
   date-format: full
   # favicon: path/to/favorite-logo.png
@@ -45,7 +45,7 @@ book:
       # footer text
 
   sidebar:
-    title: "Your Name Here"
+    title: "Mohammed Sohail Khan"
     logo: assets/sidebar-logo.png
     logo-alt: "Random negative space illustration"
     collapse-level: 2
@@ -68,11 +68,16 @@ book:
       chapters:
       - src/tt/2025-07-08.qmd
       - src/tt/2025-07-15.qmd
+      - src/tt/Homework_01_Intermediate_Data Science.qmd
 
     - part: "In-Class Activities"
       chapters:
       - src/ica/ica-sample1.qmd
       - src/ica/ica-sample2.qmd
+      - src/ica/02-Intermediate-DS-Review.qmd
+      - src/ica/03-adv-ggplot.qmd
+      - src/ica/04_adv_maps/code/Advanced_maps.qmd
+
 
   appendices:
   - src/appx/appx-sample1.qmd
