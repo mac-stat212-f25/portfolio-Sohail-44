@@ -70,6 +70,7 @@ book:
       - src/tt/2025-07-15.qmd
       - src/tt/Homework_01_Intermediate_Data Science.qmd
 
+
     - part: "In-Class Activities"
       chapters:
       - src/ica/ica-sample1.qmd
@@ -77,6 +78,13 @@ book:
       - src/ica/02-Intermediate-DS-Review.qmd
       - src/ica/03-adv-ggplot.qmd
       - src/ica/04_adv_maps/code/Advanced_maps.qmd
+      - src/ica/06-wrangling-1-notes.qmd
+      - src/ica/07-wrangling-2-notes-2.qmd
+      - src/ica/08-missing-data-notes.qmd
+      - src/ica/09-functions-notes.qmd
+      - src/ica/10-base-r-notes.qmd
+      - src/ica/11-iteration-1-notes.qmd
+      - src/ica/12-iteration-2-notes.qmd
 
 
   appendices:

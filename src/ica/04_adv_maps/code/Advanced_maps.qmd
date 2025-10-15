@@ -7,6 +7,7 @@ title: "4 Advanced Spatial Viz P1"
 #| message: false
 
 library(tidyverse)
+library(elevatr)
 knitr::opts_chunk$set(fig.align = "center", warning = FALSE, message = FALSE)
 ```
 
@@ -175,6 +176,7 @@ ggplot(nc) +
     labs(title = "NAD27 (Original)") # Just givin g the title 
 
 ```
+
 ```{r}
 
 # Example usage of this function (using a South Carolina CRS)
